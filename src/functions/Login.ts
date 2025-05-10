@@ -87,17 +87,18 @@ export class Login {
 
     private async enterEmail(page: Page, email: string) {
         const emailInputSelector = 'input[type="email"]'
-
+    
         try {
             // Wait for email field
             const emailField = await page.waitForSelector(emailInputSelector, { state: 'visible', timeout: 2000 }).catch(() => null)
             if (!emailField) {
-                this.bot.log(this.bot.isMobile, 'LOGIN', 'Email field not found', 'warn')
-                return
+                this.bot.log(this.bot.isMobile, 'LOGIN', 'Login error', 'warn')
+                // Agora lança uma exceção para forçar a voltar para login()
+                throw new Error('Login Error, restarting login')
             }
-
+    
             await this.bot.utils.wait(1000)
-
+    
             // Check if email is prefilled
             const emailPrefilled = await page.waitForSelector('#userDisplayName', { timeout: 5000 }).catch(() => null)
             if (emailPrefilled) {
@@ -109,7 +110,7 @@ export class Login {
                 await page.fill(emailInputSelector, email)
                 await this.bot.utils.wait(1000)
             }
-
+    
             const nextButton = await page.waitForSelector('button[type="submit"]', { timeout: 2000 }).catch(() => null)
             if (nextButton) {
                 await nextButton.click()
@@ -118,9 +119,11 @@ export class Login {
             } else {
                 this.bot.log(this.bot.isMobile, 'LOGIN', 'Next button not found after email entry', 'warn')
             }
-
+    
         } catch (error) {
             this.bot.log(this.bot.isMobile, 'LOGIN', `Email entry failed: ${error}`, 'error')
+            // Lança novamente para garantir que suba até login()
+            throw error
         }
     }
 
